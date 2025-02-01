@@ -2,7 +2,7 @@ from textual import events
 from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header, Label, DataTable, \
     ContentSwitcher, ListView, ListItem, Button, Input, Select, \
-    Switch
+    Switch, Checkbox
 from textual.containers import Horizontal, Vertical
 from textual.message import Message
 import db
@@ -11,27 +11,56 @@ from enums import TaskCompletionStatus, TaskCategory
 # ---
 # Composite widgets
 
+class FormCouple(Horizontal):
+    def __init__(self, label, input_widget, *args, optional=False, **kwargs):
+        self.optional = optional
+        self.label = label
+        self.input_widget = input_widget
+        input_widget.add_class("input-widget")
+        super().__init__(*args, **kwargs)
+        # no need for this, CSS can target base classes:
+        # self.add_class("form-couple")
+
+    def compose(self) -> ComposeResult:
+        if self.optional:
+            self.input_widget.disabled = True
+            yield Checkbox(self.label, classes="input-label optional")
+        else:
+            yield Label(self.label, classes="input-label")
+        yield self.input_widget
+
+    def on_checkbox_changed(self, event):
+        self.query_one(".input-widget").disabled = not event.value
+        # print(event.value)
+
 # ---
 # Main views
 
 class NewTaskForm(Vertical):
 
     def compose(self):
-        options = [
+        category_options = [
             ("Home", TaskCategory.HOME),
             ("Work", TaskCategory.WORK),
             ("Social", TaskCategory.SOCIAL)
         ]
-        with Horizontal(classes="form-couple"):
-            yield Label("Title:", classes="input-label")
-            yield Input()
-        with Horizontal(classes="form-couple"):
-            yield Label("Category:", classes="input-label")
-            yield Select(options, allow_blank=False)
-        with Horizontal(classes="form-couple"):
-            yield Switch()
-            yield Label("Status:", classes="input-label optional")
-            yield Select(options, allow_blank=False)
+        status_options = [
+            ("Completed", TaskCompletionStatus.COMPLETE),
+            ("Archived", TaskCompletionStatus.ARCHIVED),
+            ("Cancelled", TaskCompletionStatus.CANCELLED)
+        ]
+        yield FormCouple("Title:", Input())
+        yield FormCouple("Category:", Select(category_options, allow_blank=False))
+        yield FormCouple("Status:", Select(status_options, allow_blank=False), optional=True)
+        # with Horizontal(classes="form-couple"):
+        #     yield Label("Title:", classes="input-label")
+        #     yield Input()
+        # with Horizontal(classes="form-couple"):
+        #     yield Label("Category:", classes="input-label")
+        #     yield Select(category_options, allow_blank=False)
+        # with Horizontal(classes="form-couple"):
+        #     yield Checkbox("Status:", classes="input-label optional")
+        #     yield Select(status_options, allow_blank=False)
         with Horizontal(classes="form-end"):
             yield Button("Create task")
 
