@@ -28,7 +28,7 @@ class TaskInstance(Base):
     # REQUIRED
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(80))
-    status: Mapped[CompletionStatus] = mapped_column(Enum(CompletionStatus))
+    status: Mapped[TaskCompletionStatus] = mapped_column(Enum(TaskCompletionStatus))
     # OPTIONAL
     description: Mapped[str | None] = mapped_column(String(), nullable=True)
     category: Mapped[TaskCategory | None] = mapped_column(Enum(TaskCategory), nullable=True)
@@ -70,7 +70,7 @@ def get_session():
 # ---
 # CRUD
 def add_task(*, session, title,
-             status=CompletionStatus.PENDING,
+             status=TaskCompletionStatus.PENDING,
              schedule_date=None,
              schedule_time=None,
 

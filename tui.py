@@ -5,6 +5,7 @@ from textual.widgets import Footer, Header, Label, DataTable, \
 from textual.containers import Horizontal, Vertical
 from textual.message import Message
 import db
+from enums import TaskCompletionStatus, TaskCategory
 
 # ---
 # Composite widgets
@@ -15,15 +16,19 @@ import db
 class NewTaskForm(Vertical):
     def compose(self):
         options = [
-            ("Hello", 1),
-            ("Hola", 2)
+            ("Home", TaskCategory.HOME),
+            ("Work", TaskCategory.WORK),
+            ("Social", TaskCategory.SOCIAL)
         ]
         with Horizontal(classes="form-couple"):
             yield Label("Title:", classes="input-label")
             yield Input()
         with Horizontal():
             yield Label("Category:", classes="input-label")
-            yield Select(options)
+            yield Select(options, allow_blank=False)
+
+    def on_select_changed(self, event):
+        print(event.value)
 
 
 # ---
