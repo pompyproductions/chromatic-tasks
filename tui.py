@@ -1,7 +1,8 @@
 from textual import events
 from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header, Label, DataTable, \
-    ContentSwitcher, ListView, ListItem, Button, Input, Select
+    ContentSwitcher, ListView, ListItem, Button, Input, Select, \
+    Switch
 from textual.containers import Horizontal, Vertical
 from textual.message import Message
 import db
@@ -14,6 +15,7 @@ from enums import TaskCompletionStatus, TaskCategory
 # Main views
 
 class NewTaskForm(Vertical):
+
     def compose(self):
         options = [
             ("Home", TaskCategory.HOME),
@@ -23,9 +25,15 @@ class NewTaskForm(Vertical):
         with Horizontal(classes="form-couple"):
             yield Label("Title:", classes="input-label")
             yield Input()
-        with Horizontal():
+        with Horizontal(classes="form-couple"):
             yield Label("Category:", classes="input-label")
             yield Select(options, allow_blank=False)
+        with Horizontal(classes="form-couple"):
+            yield Switch()
+            yield Label("Status:", classes="input-label optional")
+            yield Select(options, allow_blank=False)
+        with Horizontal(classes="form-end"):
+            yield Button("Create task")
 
     def on_select_changed(self, event):
         print(event.value)
@@ -84,9 +92,7 @@ class TasksApp(App):
         DataTable.cursor_type = "row"
         self.create_columns(table)
         self.populate_table(table)
-    #
-    # def on_sidebar_switch_view(self, message: Sidebar.SwitchView):
-    #     print(message.target)
+
     def on_list_view_highlighted(self, event):
         print(event.item.id)
         self.query_one(ContentSwitcher).current = event.item.id
