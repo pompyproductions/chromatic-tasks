@@ -1,0 +1,18 @@
+# Project specific IDE settings
+.idea/
+
+# Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environments & environment variables
+.venv/
+.env
+
+# Database files
+*.db
+
+# Log files
+*.log
+
