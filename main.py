@@ -16,7 +16,7 @@ def main():
     db.create_tables()
     with db.DatabaseSession() as session:
         controller = Controller(session)
-        # controller.add_task(title="Completed task", status=db.CompletionStatus.COMPLETE)
+        # controller.add_task(title="Completed task", status=TaskCompletionStatus.COMPLETE)
         app = tui.TasksApp(controller=controller)
         app.run()
 

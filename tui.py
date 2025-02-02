@@ -38,7 +38,7 @@ class FormCouple(Horizontal):
 
 class NewTaskForm(Vertical):
 
-    def compose(self):
+    def compose(self) -> ComposeResult:
         category_options = [
             ("Home", TaskCategory.HOME),
             ("Work", TaskCategory.WORK),
@@ -49,23 +49,21 @@ class NewTaskForm(Vertical):
             ("Archived", TaskCompletionStatus.ARCHIVED),
             ("Cancelled", TaskCompletionStatus.CANCELLED)
         ]
-        yield FormCouple("Title:", Input())
-        yield FormCouple("Category:", Select(category_options, allow_blank=False))
-        yield FormCouple("Status:", Select(status_options, allow_blank=False), optional=True)
-        # with Horizontal(classes="form-couple"):
-        #     yield Label("Title:", classes="input-label")
-        #     yield Input()
-        # with Horizontal(classes="form-couple"):
-        #     yield Label("Category:", classes="input-label")
-        #     yield Select(category_options, allow_blank=False)
-        # with Horizontal(classes="form-couple"):
-        #     yield Checkbox("Status:", classes="input-label optional")
-        #     yield Select(status_options, allow_blank=False)
+        yield FormCouple("Title:", Input(id="new-task-title"))
+        yield FormCouple("Category:", Select(category_options, allow_blank=False, id="new-task-category"))
+        yield FormCouple("Status:", Select(status_options, allow_blank=False, id="new-task-status"), optional=True)
         with Horizontal(classes="form-end"):
-            yield Button("Create task")
+            yield Button("Create task", id="submit")
 
     def on_select_changed(self, event):
         print(event.value)
+
+    def on_button_pressed(self, event):
+        print(self.query_one("#new-task-title").value)
+        print(self.query_one("#new-task-category").value)
+        status_elem = self.query_one("#new-task-status")
+        if not status_elem.is_disabled:
+            print(status_elem.value)
 
 
 # ---
@@ -99,11 +97,11 @@ class TasksApp(App):
             title = task[0].title
             status = task[0].status
             match status:
-                case db.CompletionStatus.COMPLETE:
+                case TaskCompletionStatus.COMPLETE:
                     status = "Complete"
-                case db.CompletionStatus.PENDING:
+                case TaskCompletionStatus.PENDING:
                     status = "Pending"
-                case db.CompletionStatus.SCHEDULED:
+                case TaskCompletionStatus.SCHEDULED:
                     status = "Scheduled"
             table.add_row(title, status, key=task[0].id)
 
