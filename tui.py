@@ -4,10 +4,24 @@ from textual.widgets import Footer, Header, Label, DataTable, \
     ContentSwitcher, ListView, ListItem, Button, Input, Select, \
     Switch, Checkbox
 from textual.containers import Horizontal, Vertical
+from textual.validation import Validator, ValidationResult
 from textual.message import Message
 from textual import on
 import db
 from enums import TaskCompletionStatus, TaskCategory
+
+# ---
+# Input validators
+
+class DateValidator(Validator):
+    def __init__(self, *args, input_widgets, **kwargs):
+        self.input_elems = input_widgets
+        super().__init__(*args, **kwargs)
+
+    def validate(self, value: str) -> ValidationResult:
+        if self.query_one("#"):
+            return self.failure("Not a valid date.")
+        return self.success()
 
 # ---
 # Composite widgets
@@ -33,6 +47,28 @@ class FormCouple(Horizontal):
     def on_checkbox_changed(self, event):
         self.query_one(".input-widget").disabled = not event.value
         # print(event.value)
+
+class DateInput(Horizontal):
+
+    def compose(self) -> ComposeResult:
+        yield Input(max_length=4, placeholder="YYYY", type="integer", classes="double", id="date-year")
+        yield Input(max_length=2, placeholder="MM", type="integer", id="date-month")
+        yield Input(max_length=2, placeholder="DD", type="integer", id="date-day")
+        yield Label("No date")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def on_mount(self):
+        self.validator = DateValidator(input_widgets=(
+            self.query_one("#date-year"),
+            self.query_one("#date-month"),
+            self.query_one("#date-day")
+        ))
+
+    @on(Input.Changed)
+    def validate_inputs(self):
+        pass
 
 # ---
 # Main views
@@ -78,9 +114,10 @@ class NewTaskForm(Vertical):
             ("Archived", TaskCompletionStatus.ARCHIVED),
             ("Cancelled", TaskCompletionStatus.CANCELLED)
         ]
-        yield FormCouple("Title:", Input(id="new-task-title"))
+        yield FormCouple("Title:", Input(id="new-task-title", placeholder="Short descriptor for your task."))
         yield FormCouple("Category:", Select(category_options, allow_blank=False, id="new-task-category"))
         yield FormCouple("Status:", Select(status_options, allow_blank=False, id="new-task-status"), optional=True)
+        yield FormCouple("Scheduled:", DateInput(), optional=True, id="new-task-scheduled")
         with Horizontal(classes="form-end"):
             yield Button("Create task", id="submit")
 
@@ -90,11 +127,17 @@ class NewTaskForm(Vertical):
     @on(Input.Submitted)
     @on(Button.Pressed, "#submit")
     def submit_form(self, event):
-        print(self.query_one("#new-task-title").value)
-        print(self.query_one("#new-task-category").value)
+        print("Title: ", self.query_one("#new-task-title").value)
+        print("Category: ", self.query_one("#new-task-category").value)
         status_elem = self.query_one("#new-task-status")
         if not status_elem.is_disabled:
-            print(status_elem.value)
+            print("Status: ", status_elem.value)
+        self.reset_form()
+
+    def reset_form(self):
+        for elem in self.query("Input"):
+            elem.value = ""
+
 
 
 # ---
@@ -117,7 +160,7 @@ class TasksApp(App):
         yield Header()
         with Horizontal():
             yield Sidebar()
-            with ContentSwitcher(initial="data-table"):
+            with ContentSwitcher(initial="create-task"):
                 yield TasksTable(id="data-table", tasks=self.controller.get_all_tasks())
                 yield NewTaskForm(id="create-task", classes="form")
         yield Footer()

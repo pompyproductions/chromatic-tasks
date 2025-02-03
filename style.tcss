@@ -95,3 +95,16 @@ Switch:focus {
 *:disabled {
     tint: $background 50%;
 }
+
+DateInput {
+    Input {
+        width: 7;
+        &.double {
+            width: 9;
+        }
+    }
+    Label {
+        height: 3;
+        content-align-vertical: middle;
+    }
+}
