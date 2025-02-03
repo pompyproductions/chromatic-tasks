@@ -5,6 +5,7 @@ from textual.widgets import Footer, Header, Label, DataTable, \
     Switch, Checkbox
 from textual.containers import Horizontal, Vertical
 from textual.message import Message
+from textual import on
 import db
 from enums import TaskCompletionStatus, TaskCategory
 
@@ -35,6 +36,34 @@ class FormCouple(Horizontal):
 
 # ---
 # Main views
+
+class TasksTable(DataTable):
+    def __init__(self, *args, tasks=None, **kwargs):
+        if tasks is None:
+            tasks = []
+        self.tasks = tasks
+        super().__init__(*args, **kwargs)
+
+    def on_mount(self):
+        self.cursor_type = "row"
+        self.create_columns()
+        for task in self.tasks:
+            title = task[0].title
+            status = task[0].status
+            match status:
+                case TaskCompletionStatus.COMPLETE:
+                    status = "Complete"
+                case TaskCompletionStatus.PENDING:
+                    status = "Pending"
+                case TaskCompletionStatus.SCHEDULED:
+                    status = "Scheduled"
+            self.add_row(title, status, key=task[0].id)
+
+    def create_columns(self):
+        self.add_columns(
+            "Title", "Status", "Date/Time"
+        )
+
 
 class NewTaskForm(Vertical):
 
@@ -81,45 +110,15 @@ class TasksApp(App):
         self.controller = controller
 
     CSS_PATH = "style.tcss"
-    # BINDINGS = [
-    #     ("a", "prev", "Previous"),
-    #     ("d", "next", "Next"),
-    # ]
-
-    def create_columns(self, table):
-        table.add_columns(
-            "Title", "Status", "Date/Time"
-        )
-
-    def populate_table(self, table):
-        tasks = self.controller.get_all_tasks()
-        for task in tasks:
-            title = task[0].title
-            status = task[0].status
-            match status:
-                case TaskCompletionStatus.COMPLETE:
-                    status = "Complete"
-                case TaskCompletionStatus.PENDING:
-                    status = "Pending"
-                case TaskCompletionStatus.SCHEDULED:
-                    status = "Scheduled"
-            table.add_row(title, status, key=task[0].id)
 
     def compose(self) -> ComposeResult:
         yield Header()
         with Horizontal():
             yield Sidebar()
             with ContentSwitcher(initial="data-table"):
-                yield DataTable(id="data-table")
+                yield TasksTable(id="data-table", tasks=self.controller.get_all_tasks())
                 yield NewTaskForm(id="create-task", classes="form")
         yield Footer()
 
-    def on_mount(self) -> None:
-        table = self.query_one(DataTable)
-        DataTable.cursor_type = "row"
-        self.create_columns(table)
-        self.populate_table(table)
-
     def on_list_view_highlighted(self, event):
-        print(event.item.id)
         self.query_one(ContentSwitcher).current = event.item.id
