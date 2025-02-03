@@ -87,7 +87,9 @@ class NewTaskForm(Vertical):
     def on_select_changed(self, event):
         print(event.value)
 
-    def on_button_pressed(self, event):
+    @on(Input.Submitted)
+    @on(Button.Pressed, "#submit")
+    def submit_form(self, event):
         print(self.query_one("#new-task-title").value)
         print(self.query_one("#new-task-category").value)
         status_elem = self.query_one("#new-task-status")
