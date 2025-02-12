@@ -52,7 +52,7 @@ FormCouple {
 }
 
 Input {
-    border: $primary round;
+    border: $error round;
     background: $background;
     padding: 0;
     padding-left: 1;
@@ -64,6 +64,9 @@ Input {
     outline: none;
     &:hover {
         background: $surface
+    }
+    &.-valid {
+        border: $primary round
     }
 }
 

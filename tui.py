@@ -13,15 +13,44 @@ from enums import TaskCompletionStatus, TaskCategory
 # ---
 # Input validators
 
-class DateValidator(Validator):
-    def __init__(self, *args, input_widgets, **kwargs):
-        self.input_elems = input_widgets
-        super().__init__(*args, **kwargs)
-
+class YearValidator(Validator):
     def validate(self, value: str) -> ValidationResult:
-        if self.query_one("#"):
-            return self.failure("Not a valid date.")
-        return self.success()
+        try:
+            year = int(value)
+            if year < 999:
+                return self.failure("Year too small.")
+            elif year > 2999:
+                return self.failure("Year too big.")
+            else:
+                return self.success()
+        except ValueError:
+            return self.failure("Couldn't convert to a number.")
+
+class MonthValidator(Validator):
+    def validate(self, value: str):
+        try:
+            month = int(value)
+            if month < 1:
+                return self.failure("Month should be between 1 and 12 inclusive.")
+            elif month > 12:
+                return self.failure("Month should be between 1 and 12 inclusive.")
+            else:
+                return self.success()
+        except ValueError:
+            return self.failure("Couldn't convert to a number.")
+
+class DateValidator(Validator):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # self.month_input = month_input
+        # self.year_input = year_input
+
+    def validate(self, value: str):
+        try:
+            day = int(value)
+            month = self.parent_widget.
+        except ValueError:
+            return self.failure("Couldn't convert to a number.")
 
 # ---
 # Composite widgets
@@ -33,8 +62,6 @@ class FormCouple(Horizontal):
         self.input_widget = input_widget
         input_widget.add_class("input-widget")
         super().__init__(*args, **kwargs)
-        # no need for this, CSS can target base classes:
-        # self.add_class("form-couple")
 
     def compose(self) -> ComposeResult:
         if self.optional:
@@ -46,29 +73,53 @@ class FormCouple(Horizontal):
 
     def on_checkbox_changed(self, event):
         self.query_one(".input-widget").disabled = not event.value
-        # print(event.value)
+
 
 class DateInput(Horizontal):
-
     def compose(self) -> ComposeResult:
-        yield Input(max_length=4, placeholder="YYYY", type="integer", classes="double", id="date-year")
-        yield Input(max_length=2, placeholder="MM", type="integer", id="date-month")
-        yield Input(max_length=2, placeholder="DD", type="integer", id="date-day")
+        yield Input(max_length=4, placeholder="YYYY", type="integer", classes="double", id="date-year", validators=[YearValidator()], validate_on=["changed"])
+        yield Input(max_length=2, placeholder="MM", type="integer", id="date-month", validators=[MonthValidator()], validate_on=["changed"])
+        yield Input(max_length=2, placeholder="DD", type="integer", id="date-day", validators=[DateValidator()])
+        yield Input(max_length=2, placeholder="hh", type="integer", id="time-hour")
+        yield Input(max_length=2, placeholder="mm", type="integer", id="time-mins")
         yield Label("No date")
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def on_mount(self):
-        self.validator = DateValidator(input_widgets=(
-            self.query_one("#date-year"),
-            self.query_one("#date-month"),
-            self.query_one("#date-day")
-        ))
-
     @on(Input.Changed)
-    def validate_inputs(self):
-        pass
+    def validate_inputs(self, event):
+        year = self.query_one("#date-year")
+        month = self.query_one("#date-month")
+        day = self.query_one("#date-day")
+        hour = self.query_one("#time-hour")
+        mins = self.query_one("#time-mins")
+        if event:
+            print(event.input.id)
+        match event.input.id:
+            case "date-year":
+                if event.input.is_valid:
+                    self.query_one("#date-month").disabled = False
+                else:
+                    month.disabled = True
+                    day.disabled = True
+                    hour.disabled = True
+                    mins.disabled = True
+            case "date-month":
+                if event.input.is_valid:
+                    self.query_one("#date-day").disabled = False
+                else:
+                    day.disabled = True
+                    hour.disabled = True
+                    mins.disabled = True
+            case "date-day":
+                if event.input.is_valid:
+                    self.query_one("#time-hour").disabled = False
+                else:
+                    hour.disabled = True
+                    mins.disabled = True
+            case "time-hour":
+                if event.input.is_valid:
+                    self.query_one("#time-mins").disabled = False
+                else:
+                    mins.disabled = True
 
 # ---
 # Main views
@@ -153,6 +204,7 @@ class TasksApp(App):
     def __init__(self, controller, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.controller = controller
+        self.theme = "gruvbox"
 
     CSS_PATH = "style.tcss"
 

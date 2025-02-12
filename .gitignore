@@ -16,3 +16,4 @@ __pycache__/
 # Log files
 *.log
 
+tests.py
