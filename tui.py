@@ -140,29 +140,49 @@ class DateInput(Horizontal):
         except ValueError:
             return "Invalid_Month"
 
-    def update_date_display(self):
+    def update_date(self):
+        self.date["year"] = None
+        self.date["month"] = None
+        self.date["day"] = None
+        self.time["hour"] = None
+        self.time["mins"] = None
         text = "No date"
         year = self.query_one("#date-year")
         if year.is_valid:
             text = year.value
+            self.date["year"] = int(year.value)
             month = self.query_one("#date-month")
-            # month.validate(month.value)
             if month.is_valid:
                 text = f"{self.month_to_word(month.value)} {year.value}"
+                self.date["month"] = int(month.value)
                 day = self.query_one("#date-day")
                 if day.is_valid:
                     text = f"{self.month_to_word(month.value)} {day.value}, {year.value}"
+                    self.date["day"] = int(day.value)
                     hour = self.query_one("#time-hour")
                     if hour.is_valid:
                         text = f"{self.month_to_word(month.value)} {day.value}, {year.value} | {hour.value}h00"
+                        self.time["hour"] = int(hour.value)
+                        self.time["mins"] = 0
                         minutes = self.query_one("#time-mins")
                         if minutes.is_valid:
                             text = f"{self.month_to_word(month.value)} {day.value}, {year.value} | {hour.value}h{minutes.value}"
-
+                            self.time["mins"] = int(minutes.value)
         self.query_one("Label").update(text)
+
+
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.date = {
+            "year": None,
+            "month": None,
+            "day": None
+        }
+        self.time = {
+            "hour": None,
+            "mins": None
+        }
         self.date_validator = DateValidator()
 
     def compose(self) -> ComposeResult:
@@ -184,13 +204,11 @@ class DateInput(Horizontal):
 
     @on(Input.Changed)
     def validate_inputs(self, event):
-        year = self.query_one("#date-year")
         month = self.query_one("#date-month")
         day = self.query_one("#date-day")
         hour = self.query_one("#time-hour")
         mins = self.query_one("#time-mins")
-        if event:
-            print(event.input.id)
+
         match event.input.id:
             case "date-year":
                 if event.input.is_valid:
@@ -218,7 +236,7 @@ class DateInput(Horizontal):
                     self.query_one("#time-mins").disabled = False
                 else:
                     mins.disabled = True
-        self.update_date_display()
+        self.update_date()
 
 # ---
 # Main views
@@ -284,7 +302,7 @@ class NewTaskForm(Vertical):
         yield FormCouple("Title:", Input(id="new-task-title", placeholder="Short descriptor for your task."))
         yield FormCouple("Category:", Select(category_options, allow_blank=False, id="new-task-category"))
         yield FormCouple("Status:", Select(status_options, allow_blank=False, id="new-task-status"), optional=True)
-        yield FormCouple("Scheduled:", DateInput(), optional=True, id="new-task-scheduled")
+        yield FormCouple("Scheduled:", DateInput(id="new-task-scheduled"), optional=True)
         with Horizontal(classes="form-end"):
             yield Button("Create task", id="submit")
 
@@ -299,6 +317,18 @@ class NewTaskForm(Vertical):
         status_elem = self.query_one("#new-task-status")
         if not status_elem.is_disabled:
             print("Status: ", status_elem.value)
+        date_elem = self.query_one("#new-task-scheduled")
+        if not date_elem.is_disabled:
+            if date_elem.date["year"]:
+                print("Year: ", date_elem.date["year"])
+            if date_elem.date["month"]:
+                print("Month: ", date_elem.date["month"])
+            if date_elem.date["day"]:
+                print("Day: ", date_elem.date["day"])
+            if date_elem.time["hour"]:
+                print("Hour: ", date_elem.time["hour"])
+            if date_elem.time["mins"]:
+                print("Mins: ", date_elem.time["mins"])
         self.reset_form()
 
     def reset_form(self):

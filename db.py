@@ -36,8 +36,10 @@ class TaskInstance(Base):
     description: Mapped[str | None] = mapped_column(String(), nullable=True)
     category: Mapped[TaskCategory | None] = mapped_column(Enum(TaskCategory), nullable=True)
     template_id: Mapped[int | None] = mapped_column(ForeignKey("task_template.id"), nullable=True)
-    date_scheduled: Mapped[datetime.date | None] = mapped_column(Date, nullable=True)
-    hour_scheduled: Mapped[datetime.time | None] = mapped_column(Time, nullable=True)
+    year_scheduled: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    month_scheduled: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    day_scheduled: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    time_scheduled: Mapped[datetime.time | None] = mapped_column(Time, nullable=True)
 
 
 class TaskTemplate(Base):
