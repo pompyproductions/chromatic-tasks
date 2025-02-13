@@ -9,6 +9,7 @@ from textual.message import Message
 from textual import on
 import db
 from enums import TaskCompletionStatus, TaskCategory
+from datetime import datetime
 
 # ---
 # Input validators
@@ -42,16 +43,30 @@ class MonthValidator(Validator):
 class DateValidator(Validator):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # self.month_input = month_input
-        # self.year_input = year_input
+        self.month_input = None
+        self.year_input = None
+
+    def set_inputs(self, month_input, year_input):
+        self.month_input = month_input
+        self.year_input = year_input
 
     def validate(self, value: str):
         try:
             day = int(value)
-            month = self.parent_widget.
+            month = int(self.month_input.value)
+            year = int(self.year_input.value)
+            if day < 1:
+                return self.failure("Day can't be lower than 1.")
+            elif day > 31:
+                return self.failure("Day can't be higher than 31.")
+            else:
+                try:
+                    datetime(year, month, day)
+                    return self.success()
+                except ValueError:
+                    return self.failure("The specific date does not exist.")
         except ValueError:
             return self.failure("Couldn't convert to a number.")
-
 # ---
 # Composite widgets
 
@@ -76,13 +91,24 @@ class FormCouple(Horizontal):
 
 
 class DateInput(Horizontal):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.date_validator = DateValidator()
+
     def compose(self) -> ComposeResult:
         yield Input(max_length=4, placeholder="YYYY", type="integer", classes="double", id="date-year", validators=[YearValidator()], validate_on=["changed"])
         yield Input(max_length=2, placeholder="MM", type="integer", id="date-month", validators=[MonthValidator()], validate_on=["changed"])
-        yield Input(max_length=2, placeholder="DD", type="integer", id="date-day", validators=[DateValidator()])
+        yield Input(max_length=2, placeholder="DD", type="integer", id="date-day", validators=[self.date_validator])
         yield Input(max_length=2, placeholder="hh", type="integer", id="time-hour")
         yield Input(max_length=2, placeholder="mm", type="integer", id="time-mins")
         yield Label("No date")
+
+    def on_mount(self):
+        self.date_validator.set_inputs(
+            month_input=self.query_one("#date-month"),
+            year_input=self.query_one("#date-year")
+        )
 
     @on(Input.Changed)
     def validate_inputs(self, event):
