@@ -28,7 +28,7 @@ class YearValidator(Validator):
             return self.failure("Couldn't convert to a number.")
 
 class MonthValidator(Validator):
-    def validate(self, value: str):
+    def validate(self, value: str) -> ValidationResult:
         try:
             month = int(value)
             if month < 1:
@@ -50,7 +50,7 @@ class DateValidator(Validator):
         self.month_input = month_input
         self.year_input = year_input
 
-    def validate(self, value: str):
+    def validate(self, value: str) -> ValidationResult:
         try:
             day = int(value)
             month = int(self.month_input.value)
@@ -67,6 +67,33 @@ class DateValidator(Validator):
                     return self.failure("The specific date does not exist.")
         except ValueError:
             return self.failure("Couldn't convert to a number.")
+
+class HourValidator(Validator):
+    def validate(self, value) -> ValidationResult:
+        try:
+            hour = int(value)
+            if hour < 0:
+                return self.failure("Hour can't be negative")
+            elif hour > 23:
+                return self.failure("Hour can't be higher than 23")
+            return self.success()
+        except ValueError:
+            return self.failure("Couldn't convert to number.")
+
+
+class MinuteValidator(Validator):
+    def validate(self, value) -> ValidationResult:
+        try:
+            mins = int(value)
+            if mins < 0:
+                return self.failure("Minutes can't be negative")
+            elif mins > 59:
+                return self.failure("Minutes can't be higher than 59")
+            return self.success()
+        except ValueError:
+            return self.failure("Couldn't convert to number.")
+
+
 # ---
 # Composite widgets
 
@@ -92,16 +119,57 @@ class FormCouple(Horizontal):
 
 class DateInput(Horizontal):
 
+    @staticmethod
+    def month_to_word(month):
+        try:
+            return [
+                "January",
+                "February",
+                "March",
+                "April",
+                "May",
+                "June",
+                "July",
+                "August",
+                "September",
+                "October",
+                "November",
+                "December"
+            ][int(month) - 1]
+        except ValueError:
+            return "Invalid_Month"
+
+    def update_date_display(self):
+        text = "No date"
+        year = self.query_one("#date-year")
+        if year.is_valid:
+            text = year.value
+            month = self.query_one("#date-month")
+            # month.validate(month.value)
+            if month.is_valid:
+                text = f"{self.month_to_word(month.value)} {year.value}"
+                day = self.query_one("#date-day")
+                if day.is_valid:
+                    text = f"{self.month_to_word(month.value)} {day.value}, {year.value}"
+                    hour = self.query_one("#time-hour")
+                    if hour.is_valid:
+                        text = f"{self.month_to_word(month.value)} {day.value}, {year.value} | {hour.value}h00"
+                        minutes = self.query_one("#time-mins")
+                        if minutes.is_valid:
+                            text = f"{self.month_to_word(month.value)} {day.value}, {year.value} | {hour.value}h{minutes.value}"
+
+        self.query_one("Label").update(text)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.date_validator = DateValidator()
 
     def compose(self) -> ComposeResult:
         yield Input(max_length=4, placeholder="YYYY", type="integer", classes="double", id="date-year", validators=[YearValidator()], validate_on=["changed"])
-        yield Input(max_length=2, placeholder="MM", type="integer", id="date-month", validators=[MonthValidator()], validate_on=["changed"])
+        yield Input(max_length=2, placeholder="MM", type="integer", id="date-month", validators=[MonthValidator()])
         yield Input(max_length=2, placeholder="DD", type="integer", id="date-day", validators=[self.date_validator])
-        yield Input(max_length=2, placeholder="hh", type="integer", id="time-hour")
-        yield Input(max_length=2, placeholder="mm", type="integer", id="time-mins")
+        yield Input(max_length=2, placeholder="hh", type="integer", id="time-hour", validators=[HourValidator()])
+        yield Input(max_length=2, placeholder="mm", type="integer", id="time-mins", validators=[MinuteValidator()])
         yield Label("No date")
 
     def on_mount(self):
@@ -109,6 +177,9 @@ class DateInput(Horizontal):
             month_input=self.query_one("#date-month"),
             year_input=self.query_one("#date-year")
         )
+        for id in ["#date-year", "#date-month", "#date-day", "#time-hour", "#time-mins"]:
+            elem = self.query_one(id)
+            elem.validate(elem.value)
 
     @on(Input.Changed)
     def validate_inputs(self, event):
@@ -146,6 +217,7 @@ class DateInput(Horizontal):
                     self.query_one("#time-mins").disabled = False
                 else:
                     mins.disabled = True
+        self.update_date_display()
 
 # ---
 # Main views
