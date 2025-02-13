@@ -1,4 +1,5 @@
 import datetime, os
+
 from enums import TaskCompletionStatus, TaskCategory
 
 from sqlalchemy import create_engine
@@ -9,6 +10,8 @@ from sqlalchemy import Column, Table
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from sqlalchemy.exc import SQLAlchemyError
 
 DATABASE_URL = os.getenv("CHROMATIC_TASK_DATABASE_URL", "sqlite:///default.db")
 engine = create_engine(DATABASE_URL, echo=False)
@@ -80,6 +83,17 @@ def add_task(*, session, title,
         status=status
     ))
 
+def delete_task(*, session, id):
+    task = session.get(TaskInstance, id)
+    if not task:
+        return False  # Task not found
+    try:
+        session.delete(task)
+        session.commit()  # Ensure the delete is saved
+        return True
+    except SQLAlchemyError:
+        session.rollback()  # Undo changes on failure
+        return False
 
 def get_task_instances(session):
     return session.execute(select(TaskInstance))

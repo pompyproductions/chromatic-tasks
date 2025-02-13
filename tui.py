@@ -7,6 +7,7 @@ from textual.containers import Horizontal, Vertical
 from textual.validation import Validator, ValidationResult
 from textual.message import Message
 from textual import on
+
 import db
 from enums import TaskCompletionStatus, TaskCategory
 from datetime import datetime
@@ -223,6 +224,15 @@ class DateInput(Horizontal):
 # Main views
 
 class TasksTable(DataTable):
+
+    BINDINGS = [
+        ("backspace", "delete_entry()", "Delete Entry")
+    ]
+    class DeleteEntry(Message):
+        def __init__(self, key):
+            self.key = key
+            super().__init__()
+
     def __init__(self, *args, tasks=None, **kwargs):
         if tasks is None:
             tasks = []
@@ -249,6 +259,14 @@ class TasksTable(DataTable):
             "Title", "Status", "Date/Time"
         )
 
+    def action_delete_entry(self):
+        try:
+            row_key, _ = self.coordinate_to_cell_key(self.cursor_coordinate)
+            self.post_message(self.DeleteEntry(row_key))
+        except Exception:
+            print("Failed.")
+        # self.remove_row(row_key)
+        # print(self.remove_row(self.cursor_row))
 
 class NewTaskForm(Vertical):
 
@@ -317,3 +335,9 @@ class TasksApp(App):
 
     def on_list_view_highlighted(self, event):
         self.query_one(ContentSwitcher).current = event.item.id
+
+    @on(TasksTable.DeleteEntry)
+    def delete_entry(self, message):
+        if self.controller.delete_task(id=message.key.value):
+            self.query_one(TasksTable).remove_row(message.key)
+        # print(message.key.value)

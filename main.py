@@ -12,6 +12,9 @@ class Controller:
     def get_all_tasks(self):
         return db.get_task_instances(self.session)
 
+    def delete_task(self, *, id):
+        return db.delete_task(session=self.session, id=id)
+
 def main():
     db.create_tables()
     with db.DatabaseSession() as session:
