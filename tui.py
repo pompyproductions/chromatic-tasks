@@ -4,7 +4,7 @@ from textual.widgets import Footer, Header, Label, DataTable, \
     ContentSwitcher, ListView, ListItem, Button, Input, Select, \
     Switch, Checkbox
 from textual.containers import Horizontal, Vertical
-from textual.validation import Validator, ValidationResult
+from textual.validation import Validator, ValidationResult, Length
 from textual.message import Message
 from textual import on
 
@@ -299,7 +299,7 @@ class NewTaskForm(Vertical):
             ("Archived", TaskCompletionStatus.ARCHIVED),
             ("Cancelled", TaskCompletionStatus.CANCELLED)
         ]
-        yield FormCouple("Title:", Input(id="new-task-title", placeholder="Short descriptor for your task."))
+        yield FormCouple("Title:", Input(id="new-task-title", placeholder="Short descriptor for your task.", validators=[Length(minimum=1)], valid_empty=False, validate_on=["changed"]))
         yield FormCouple("Category:", Select(category_options, allow_blank=False, id="new-task-category"))
         yield FormCouple("Status:", Select(status_options, allow_blank=False, id="new-task-status"), optional=True)
         yield FormCouple("Scheduled:", DateInput(id="new-task-scheduled"), optional=True)
@@ -309,9 +309,17 @@ class NewTaskForm(Vertical):
     def on_select_changed(self, event):
         print(event.value)
 
+    def on_mount(self):
+        elem = self.query_one("#new-task-title")
+        elem.validate(elem.value)
+
     @on(Input.Submitted)
     @on(Button.Pressed, "#submit")
     def submit_form(self, event):
+        if not self.query_one("#new-task-title").is_valid:
+            print("title not valid")
+            return
+
         print("Title: ", self.query_one("#new-task-title").value)
         print("Category: ", self.query_one("#new-task-category").value)
         status_elem = self.query_one("#new-task-status")
