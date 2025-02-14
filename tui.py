@@ -8,9 +8,26 @@ from textual.validation import Validator, ValidationResult, Length
 from textual.message import Message
 from textual import on
 
-import db
+import enums
 from enums import TaskCompletionStatus, TaskCategory
-from datetime import datetime
+from datetime import datetime, time
+
+from pprint import pprint
+
+# ---
+# Objects
+
+class Task:
+    def __init__(self, *args, title:str, category:TaskCategory):
+        self.title = title
+        self.category = category
+        self.status = TaskCompletionStatus.PENDING
+        self.description : str | None = None
+        self.year_scheduled : int | None = None
+        self.month_scheduled : int | None = None
+        self.day_scheduled : int | None = None
+        self.time_scheduled : time | None = None
+
 
 # ---
 # Input validators
@@ -288,6 +305,11 @@ class TasksTable(DataTable):
 
 class NewTaskForm(Vertical):
 
+    class NewTaskSubmit(Message):
+        def __init__(self, task):
+            self.task = task
+            super().__init__()
+
     def compose(self) -> ComposeResult:
         category_options = [
             ("Home", TaskCategory.HOME),
@@ -316,27 +338,33 @@ class NewTaskForm(Vertical):
     @on(Input.Submitted)
     @on(Button.Pressed, "#submit")
     def submit_form(self, event):
-        if not self.query_one("#new-task-title").is_valid:
+        title_elem = self.query_one("#new-task-title")
+        if not title_elem.is_valid:
             print("title not valid")
             return
+        task = Task(
+            title=title_elem.value,
+            category=self.query_one("#new-task-category").value
+        )
 
-        print("Title: ", self.query_one("#new-task-title").value)
-        print("Category: ", self.query_one("#new-task-category").value)
         status_elem = self.query_one("#new-task-status")
         if not status_elem.is_disabled:
-            print("Status: ", status_elem.value)
+            task.status = status_elem.value
+
         date_elem = self.query_one("#new-task-scheduled")
         if not date_elem.is_disabled:
             if date_elem.date["year"]:
-                print("Year: ", date_elem.date["year"])
+                task.year_scheduled = date_elem.date["year"]
             if date_elem.date["month"]:
-                print("Month: ", date_elem.date["month"])
+                task.month_scheduled = date_elem.date["month"]
             if date_elem.date["day"]:
-                print("Day: ", date_elem.date["day"])
+                task.day_scheduled = date_elem.date["day"]
             if date_elem.time["hour"]:
-                print("Hour: ", date_elem.time["hour"])
-            if date_elem.time["mins"]:
-                print("Mins: ", date_elem.time["mins"])
+                if date_elem.time["mins"]:
+                    task.time_scheduled = time(hour=date_elem.time["hour"], minute=date_elem.time["mins"])
+                else:
+                    task.time_scheduled = time(hour=date_elem.time["hour"])
+        self.post_message(self.NewTaskSubmit(task))
         self.reset_form()
 
     def reset_form(self):
@@ -379,3 +407,9 @@ class TasksApp(App):
         if self.controller.delete_task(id=message.key.value):
             self.query_one(TasksTable).remove_row(message.key)
         # print(message.key.value)
+    @on(NewTaskForm.NewTaskSubmit)
+    def create_task(self, message):
+        for attr in dir(message.task):
+            # Getting rid of dunder methods
+            if not attr.startswith("__"):
+                print(attr, getattr(message.task, attr))

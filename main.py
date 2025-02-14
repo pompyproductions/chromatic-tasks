@@ -7,7 +7,7 @@ class Controller:
         self.session = session
 
     def add_task(self, *, title, status=TaskCompletionStatus.PENDING):
-        db.add_task(session=self.session, title=title, status=status)
+        return db.add_task(session=self.session, title=title, status=status)
 
     def get_all_tasks(self):
         return db.get_task_instances(self.session)

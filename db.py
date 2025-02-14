@@ -74,27 +74,33 @@ def get_session():
 
 # ---
 # CRUD
-def add_task(*, session, title,
-             status=TaskCompletionStatus.PENDING,
-             schedule_date=None,
-             schedule_time=None,
-
-             ):
-    session.add(TaskInstance(
-        title=title,
-        status=status
-    ))
+def add_task(*, session, task):
+    entry = TaskInstance(
+        title=task.title,
+        status=task.status,
+        category=task.category,
+        description=task.description,
+        year_scheduled=task.year_scheduled,
+        month_scheduled=task.month_scheduled,
+        day_scheduled=task.day_scheduled,
+        time_scheduled=task.time_scheduled
+    )
+    try:
+        session.add(entry)
+        return True
+    except SQLAlchemyError:
+        return False
 
 def delete_task(*, session, id):
     task = session.get(TaskInstance, id)
     if not task:
-        return False  # Task not found
+        return False
     try:
         session.delete(task)
-        session.commit()  # Ensure the delete is saved
+        session.commit()
         return True
     except SQLAlchemyError:
-        session.rollback()  # Undo changes on failure
+        session.rollback()
         return False
 
 def get_task_instances(session):
