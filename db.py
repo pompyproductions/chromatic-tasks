@@ -87,9 +87,11 @@ def add_task(*, session, task):
     )
     try:
         session.add(entry)
-        return True
+        session.commit()  # Ensure the entry is written to the database
+        session.refresh(entry)
+        return entry
     except SQLAlchemyError:
-        return False
+        return None
 
 def delete_task(*, session, id):
     task = session.get(TaskInstance, id)

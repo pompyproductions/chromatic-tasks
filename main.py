@@ -6,8 +6,8 @@ class Controller:
     def __init__(self, session):
         self.session = session
 
-    def add_task(self, *, title, status=TaskCompletionStatus.PENDING):
-        return db.add_task(session=self.session, title=title, status=status)
+    def add_task(self, *, task):
+        return db.add_task(session=self.session, task=task)
 
     def get_all_tasks(self):
         return db.get_task_instances(self.session)

@@ -260,9 +260,25 @@ class DateInput(Horizontal):
 
 class TasksTable(DataTable):
 
+    @staticmethod
+    def date_to_string(year=None, month=None, day=None):
+        text = "No date"
+        if year:
+            text = str(year)
+            if month:
+                text = f"{DateInput.month_to_word(month)} {str(year)}"
+                if day:
+                    text = f"{DateInput.month_to_word(month)} {str(day)}, {str(year)}"
+        return text
+
+    @staticmethod
+    def time_to_string(time):
+        return f"{time.hour}h{time.minute:02d}"
+
     BINDINGS = [
         ("backspace", "delete_entry()", "Delete Entry")
     ]
+
     class DeleteEntry(Message):
         def __init__(self, key):
             self.key = key
@@ -278,21 +294,34 @@ class TasksTable(DataTable):
         self.cursor_type = "row"
         self.create_columns()
         for task in self.tasks:
-            title = task[0].title
-            status = task[0].status
-            match status:
-                case TaskCompletionStatus.COMPLETE:
-                    status = "Complete"
-                case TaskCompletionStatus.PENDING:
-                    status = "Pending"
-                case TaskCompletionStatus.SCHEDULED:
-                    status = "Scheduled"
-            self.add_row(title, status, key=task[0].id)
+            self.create_row(task[0])
 
     def create_columns(self):
         self.add_columns(
             "Title", "Status", "Date/Time"
         )
+
+    def create_row(self, task):
+        title = task.title
+        status = task.status
+        match status:
+            case TaskCompletionStatus.COMPLETE:
+                status = "Complete"
+            case TaskCompletionStatus.PENDING:
+                status = "Pending"
+            case TaskCompletionStatus.SCHEDULED:
+                status = "Scheduled"
+            case TaskCompletionStatus.ARCHIVED:
+                status = "Archived"
+        date_time = self.date_to_string(
+            task.year_scheduled,
+            task.month_scheduled,
+            task.day_scheduled
+        )
+        if task.time_scheduled:
+            date_time += f" | {self.time_to_string(task.time_scheduled)}"
+
+        self.add_row(title, status, date_time, key=task.id)
 
     def action_delete_entry(self):
         try:
@@ -409,7 +438,9 @@ class TasksApp(App):
         # print(message.key.value)
     @on(NewTaskForm.NewTaskSubmit)
     def create_task(self, message):
-        for attr in dir(message.task):
-            # Getting rid of dunder methods
-            if not attr.startswith("__"):
-                print(attr, getattr(message.task, attr))
+        new_task = self.controller.add_task(task=message.task)
+        if new_task:
+            self.query_one(TasksTable).create_row(new_task)
+        # for attr in dir(message.task):
+        #     if not attr.startswith("__"):
+        #         print(attr, getattr(message.task, attr))
