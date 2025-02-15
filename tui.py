@@ -417,6 +417,10 @@ class NewTaskForm(Vertical):
 # Modals
 
 class EditTaskPopup(ModalScreen):
+    # def __init__(self, *args, task_data:dict, **kwargs):
+    #     self.task_data = task_data
+    #     super().__init__(*args, **kwargs)
+
     def compose(self) -> ComposeResult:
         category_options = [
             ("Home", TaskCategory.HOME),
@@ -438,6 +442,17 @@ class EditTaskPopup(ModalScreen):
             with Horizontal(classes="form-end"):
                 yield Button("Cancel", id="cancel")
                 yield Button("Edit task", id="submit")
+
+    # def on_mount(self):
+    #     fields = {
+    #         "title": "edit-task-title",
+    #         "category": "edit-task-category",
+    #         "status": "edit-task-status",
+    #         # "year_scheduled": "edit-task-scheduled",
+    #     }
+    #     for key, widget_id in fields.items():
+    #         if key in self.task_data:
+    #             widget = self.query_one(f"#widget_id")
 
     @on(Button.Pressed, "#cancel")
     def key_escape(self):
@@ -480,7 +495,11 @@ class TasksApp(App):
 
     @on(TasksTable.EditEntry)
     def edit_entry(self, message):
-        self.push_screen(EditTaskPopup())
+        task_entry = self.controller.get_task(id=message.key.value)
+        if task_entry:
+            popup = EditTaskPopup()
+            # popup = EditTaskPopup(task_data=task_entry.to_dict())
+            self.push_screen(popup)
 
     @on(NewTaskForm.NewTaskSubmit)
     def create_task(self, message):

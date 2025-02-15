@@ -41,6 +41,14 @@ class TaskInstance(Base):
     day_scheduled: Mapped[int | None] = mapped_column(Integer, nullable=True)
     time_scheduled: Mapped[datetime.time | None] = mapped_column(Time, nullable=True)
 
+    def to_dict(self) -> dict:
+        task_dict = {}
+        for key, value in self.__dict__.items():
+            if key.startswith("_"):
+                continue
+            if value is not None:
+                task_dict[key] = value
+        return task_dict
 
 class TaskTemplate(Base):
     __tablename__ = "task_template"
@@ -107,3 +115,6 @@ def delete_task(*, session, id):
 
 def get_task_instances(session):
     return session.execute(select(TaskInstance))
+
+def get_task_instance(session, id):
+    return session.execute(select(TaskInstance).where(TaskInstance.id == id))

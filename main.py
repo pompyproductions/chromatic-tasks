@@ -3,6 +3,7 @@ import db
 from enums import TaskCompletionStatus, TaskCategory
 
 class Controller:
+
     def __init__(self, session):
         self.session = session
 
@@ -12,6 +13,9 @@ class Controller:
     def get_all_tasks(self):
         return db.get_task_instances(self.session)
 
+    def get_task(self, id):
+        return db.get_task_instance(self.session, id=id)
+
     def delete_task(self, *, id):
         return db.delete_task(session=self.session, id=id)
 
@@ -19,7 +23,6 @@ def main():
     db.create_tables()
     with db.DatabaseSession() as session:
         controller = Controller(session)
-        # controller.add_task(title="Completed task", status=TaskCompletionStatus.COMPLETE)
         app = tui.TasksApp(controller=controller)
         app.run()
 
