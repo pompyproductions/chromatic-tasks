@@ -1,31 +1,32 @@
 ListView {
-    width: 15;
+    width: auto;
     padding-top: 1;
     hatch: "░" black;
     background: $background;
-}
-
-ListItem {
-    padding-left: 1;
-    padding-right: 1;
-    color: $foreground;
+    ListItem {
+        width: auto;
+        padding-left: 1;
+        padding-right: 3;
+        color: $foreground;
+    }
 }
 
 Button {
-    border: $secondary round;
+    border: $primary round;
+    background: $background;
     width: 20;
     margin: 0;
     content-align-horizontal: center;
 }
+/*
 Button:focus, Button:focus * {
     background: $background;
     tint: #000000 0%;
 }
+*/
 
 .input-label {
-    width: 24;
-    background: blue;
-    background: $background;
+    width: 20;
     height: 3;
     content-align-vertical: middle;
     padding-right: 1;
@@ -35,20 +36,21 @@ Button:focus, Button:focus * {
 
 .input-label.optional {
     border: none;
+    background: $background
+}
+
+Checkbox > .toggle--button {
+    text-style: bold;
 }
 
 NewTaskForm {
     height: 1fr;
-    background: blue;
-    background: initial;
     content-align: center middle;
 }
 
 FormCouple {
     height: auto;
-}
-.form-end {
-    align-horizontal: center;
+    width: auto;
 }
 
 Input {
@@ -58,7 +60,6 @@ Input {
     padding-left: 1;
     padding-right: 1;
     margin: 0;
-    margin-right: 2;
     height: 3;
     width: 50;
     outline: none;
@@ -72,34 +73,26 @@ Input {
 
 Select {
     border: $primary round;
-    background: $background;
     height: 3;
     width: 50;
+    * {
+        border: none;
+        width: 48;
+        background: $background
+    }
+    *:hover {
+       background: $surface
+    }
 }
-Select * {
-    background: $background;
-    border: none;
-}
-Select *:hover {
-    background: $surface
-}
-
-Switch {
-    border: none;
-    background: $background;
-    margin: 1;
-    width: 7
-}
-
-Switch:focus {
-    background: $background;
-}
-
+/*
 *:disabled {
     tint: $background 50%;
 }
-
+*/
 DateInput {
+    width: auto;
+    height: auto;
+    padding-right: 2;
     Input {
         width: 7;
         &.double {
@@ -108,6 +101,45 @@ DateInput {
     }
     Label {
         height: 3;
+        margin-left: 2;
+
         content-align-vertical: middle;
+    }
+    &:disabled Input {
+        border: $primary round;
+    }
+}
+
+.form-end {
+    width: auto;
+    height: auto;
+    margin-left: 20;
+}
+
+EditTaskPopup {
+    height: auto;
+    width: auto;
+    align: center middle;
+    & > Vertical {
+        background: $panel;
+        padding: 1;
+        width: auto;
+        height: auto;
+    }
+    Input,
+    Select, Select *,
+    .input-label.optional {
+        background: $panel;
+    }
+    Checkbox > .toggle--button {
+        color: $panel;
+        background: $background;
+        text-style: bold;
+    }
+    Checkbox.-on > .toggle--button {
+        color: $primary;
+    }
+    Button {
+        background: $panel;
     }
 }

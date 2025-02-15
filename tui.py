@@ -3,9 +3,10 @@ from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header, Label, DataTable, \
     ContentSwitcher, ListView, ListItem, Button, Input, Select, \
     Switch, Checkbox
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal, Vertical, Container
 from textual.validation import Validator, ValidationResult, Length
 from textual.message import Message
+from textual.screen import ModalScreen
 from textual import on
 
 import enums
@@ -284,6 +285,10 @@ class TasksTable(DataTable):
         def __init__(self, key):
             self.key = key
             super().__init__()
+    class EditEntry(Message):
+        def __init__(self, key):
+            self.key = key
+            super().__init__()
 
     def __init__(self, *args, tasks=None, **kwargs):
         if tasks is None:
@@ -335,6 +340,7 @@ class TasksTable(DataTable):
         try:
             row_key, _ = self.coordinate_to_cell_key(self.cursor_coordinate)
             print(row_key.value, self.get_row(row_key))
+            self.post_message(self.EditEntry(row_key))
         except Exception:
             print("Failed.")
 
@@ -406,7 +412,35 @@ class NewTaskForm(Vertical):
         for elem in self.query("Input"):
             elem.value = ""
 
+# ---
+# Modals
 
+class EditTaskPopup(ModalScreen):
+    def compose(self) -> ComposeResult:
+        category_options = [
+            ("Home", TaskCategory.HOME),
+            ("Work", TaskCategory.WORK),
+            ("Social", TaskCategory.SOCIAL)
+        ]
+        status_options = [
+            ("Completed", TaskCompletionStatus.COMPLETE),
+            ("Archived", TaskCompletionStatus.ARCHIVED),
+            ("Cancelled", TaskCompletionStatus.CANCELLED)
+        ]
+        with Vertical():
+            yield FormCouple("Title:", Input(id="edit-task-title", placeholder="Short descriptor for your task.",
+                                             validators=[Length(minimum=1)], valid_empty=False,
+                                             validate_on=["changed"]))
+            yield FormCouple("Category:", Select(category_options, allow_blank=False, id="edit-task-category"))
+            yield FormCouple("Status:", Select(status_options, allow_blank=False, id="edit-task-status"), optional=True)
+            yield FormCouple("Scheduled:", DateInput(id="edit-task-scheduled"), optional=True)
+            with Horizontal(classes="form-end"):
+                yield Button("Cancel", id="cancel")
+                yield Button("Edit task", id="submit")
+
+    @on(Button.Pressed, "#cancel")
+    def key_escape(self):
+        self.app.pop_screen()
 
 # ---
 # Navigation
@@ -442,6 +476,11 @@ class TasksApp(App):
         if self.controller.delete_task(id=message.key.value):
             self.query_one(TasksTable).remove_row(message.key)
         # print(message.key.value)
+
+    @on(TasksTable.EditEntry)
+    def edit_entry(self, message):
+        self.push_screen(EditTaskPopup())
+
     @on(NewTaskForm.NewTaskSubmit)
     def create_task(self, message):
         new_task = self.controller.add_task(task=message.task)
