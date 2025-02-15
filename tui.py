@@ -28,7 +28,8 @@ class Task:
         self.month_scheduled : int | None = None
         self.day_scheduled : int | None = None
         self.time_scheduled : time | None = None
-
+    def setup(self, task_entry): # using a db entry
+        self.title = task_entry.title
 
 # ---
 # Input validators
@@ -165,24 +166,24 @@ class DateInput(Horizontal):
         self.time["hour"] = None
         self.time["mins"] = None
         text = "No date"
-        year = self.query_one("#date-year")
+        year = self.query_one("#date-year", expect_type=Input)
         if year.is_valid:
             text = year.value
             self.date["year"] = int(year.value)
-            month = self.query_one("#date-month")
+            month = self.query_one("#date-month", expect_type=Input)
             if month.is_valid:
                 text = f"{self.month_to_word(month.value)} {year.value}"
                 self.date["month"] = int(month.value)
-                day = self.query_one("#date-day")
+                day = self.query_one("#date-day", expect_type=Input)
                 if day.is_valid:
                     text = f"{self.month_to_word(month.value)} {day.value}, {year.value}"
                     self.date["day"] = int(day.value)
-                    hour = self.query_one("#time-hour")
+                    hour = self.query_one("#time-hour", expect_type=Input)
                     if hour.is_valid:
                         text = f"{self.month_to_word(month.value)} {day.value}, {year.value} | {hour.value}h00"
                         self.time["hour"] = int(hour.value)
                         self.time["mins"] = 0
-                        minutes = self.query_one("#time-mins")
+                        minutes = self.query_one("#time-mins", expect_type=Input)
                         if minutes.is_valid:
                             text = f"{self.month_to_word(month.value)} {day.value}, {year.value} | {hour.value}h{minutes.value}"
                             self.time["mins"] = int(minutes.value)
@@ -379,20 +380,20 @@ class NewTaskForm(Vertical):
     @on(Input.Submitted)
     @on(Button.Pressed, "#submit")
     def submit_form(self, event):
-        title_elem = self.query_one("#new-task-title")
+        title_elem = self.query_one("#new-task-title", expect_type=Input)
         if not title_elem.is_valid:
             print("title not valid")
             return
         task = Task(
             title=title_elem.value,
-            category=self.query_one("#new-task-category").value
+            category=self.query_one("#new-task-category", expect_type=Select).value
         )
 
-        status_elem = self.query_one("#new-task-status")
+        status_elem = self.query_one("#new-task-status", expect_type=Select)
         if not status_elem.is_disabled:
             task.status = status_elem.value
 
-        date_elem = self.query_one("#new-task-scheduled")
+        date_elem = self.query_one("#new-task-scheduled", expect_type=DateInput)
         if not date_elem.is_disabled:
             if date_elem.date["year"]:
                 task.year_scheduled = date_elem.date["year"]
