@@ -276,7 +276,8 @@ class TasksTable(DataTable):
         return f"{time.hour}h{time.minute:02d}"
 
     BINDINGS = [
-        ("backspace", "delete_entry()", "Delete Entry")
+        ("backspace", "delete_entry()", "Delete Entry"),
+        ("enter", "edit_entry()", "Edit Entry")
     ]
 
     class DeleteEntry(Message):
@@ -327,10 +328,15 @@ class TasksTable(DataTable):
         try:
             row_key, _ = self.coordinate_to_cell_key(self.cursor_coordinate)
             self.post_message(self.DeleteEntry(row_key))
+        except Exception: # this happens when there are no rows & you try to delete row 0
+            print("Failed.")
+
+    def action_edit_entry(self):
+        try:
+            row_key, _ = self.coordinate_to_cell_key(self.cursor_coordinate)
+            print(row_key.value, self.get_row(row_key))
         except Exception:
             print("Failed.")
-        # self.remove_row(row_key)
-        # print(self.remove_row(self.cursor_row))
 
 class NewTaskForm(Vertical):
 
