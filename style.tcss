@@ -1,3 +1,7 @@
+*:disabled {
+    opacity: 0.6
+}
+
 ListView {
     width: auto;
     padding-top: 1;
@@ -39,9 +43,18 @@ Button:focus, Button:focus * {
     background: $background
 }
 
-Checkbox > .toggle--button {
-    text-style: bold;
+Checkbox {
+    & > .toggle--button {
+        text-style: bold;
+    }
+    & > .toggle--label {
+        color: $foreground 50%;
+    }
+    &.-on > .toggle--label {
+        color: $foreground;
+    }
 }
+
 
 NewTaskForm {
     height: 1fr;
@@ -136,8 +149,14 @@ EditTaskPopup {
         background: $background;
         text-style: bold;
     }
+    Checkbox > .toggle--label {
+        color: $foreground 50%;
+    }
     Checkbox.-on > .toggle--button {
         color: $primary;
+    }
+    Checkbox.-on > .toggle--label {
+        color: $foreground;
     }
     Button {
         background: $panel;
