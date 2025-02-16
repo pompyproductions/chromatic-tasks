@@ -117,4 +117,4 @@ def get_task_instances(session):
     return session.execute(select(TaskInstance))
 
 def get_task_instance(session, id):
-    return session.execute(select(TaskInstance).where(TaskInstance.id == id))
+    return session.execute(select(TaskInstance).where(TaskInstance.id == id)).one()[0]
