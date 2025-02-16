@@ -124,6 +124,10 @@ class DateInput(Horizontal):
                             self.time["mins"] = int(minutes.value)
         self.query_one("Label", expect_type=Label).update(text)
 
+    def set_date(self, *, date: dict, time: dict):
+        if date["year"]:
+            self.query_one("#date-year", expect_type=Input).value = str(date["year"])
+
     @on(Input.Changed)
     def validate_inputs(self, event):
         month = self.query_one("#date-month")

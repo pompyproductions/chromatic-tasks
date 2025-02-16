@@ -237,6 +237,30 @@ class EditTaskPopup(ModalScreen):
         # Required values
         self.query_one("#edit-task-title", expect_type=Input).value = self.task_data["title"]
         self.query_one("#edit-task-status", expect_type=Select).value = self.task_data["status"]
+        self.query_one("#edit-task-category", expect_type=Select).value = self.task_data["category"]
+        # Optional values
+        task_date = {
+            "year": None,
+            "month": None,
+            "day": None
+        }
+        task_time = {
+            "hour": None,
+            "mins": None
+        }
+        for task_key, task_value in self.task_data.items():
+            if task_key in ["title", "status", "id", "category"]:
+                continue
+            if task_key in ["year_scheduled", "month_scheduled", "day_scheduled"]:
+                task_date[task_key[:-10]] = task_value
+            elif task_key == "time_scheduled":
+                task_time["hour"] = task_value.hour
+                task_time["mins"] = task_value.minute
+            else:
+                print(f"{task_key}: {task_value}")
+        self.query_one("#edit-task-scheduled", expect_type=DateInput).set_date(
+            date=task_date, time=task_time
+        )
 
     @on(Button.Pressed, "#cancel")
     def key_escape(self):
