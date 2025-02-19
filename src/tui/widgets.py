@@ -94,6 +94,53 @@ class DateInput(Horizontal):
             elem = self.query_one(widget_id, expect_type=Input)
             elem.validate(elem.value)
 
+    def parse_date(self) -> dict:
+
+        date : dict[str, None | int] = {
+            "year": None,
+            "month": None,
+            "day": None,
+            "hour": None,
+            "mins": None
+        }
+        year = self.query_one("#date-year", expect_type=Input)
+        if not year.is_valid:
+            return date
+        date["year"] = year.value
+        month= self.query_one("#month-year", expect_type=Input)
+
+        if not month.is_valid:
+            pass
+
+        # self.date["year"] = None
+        # self.date["month"] = None
+        # self.date["day"] = None
+        # self.time["hour"] = None
+        # self.time["mins"] = None
+        text = "No date"
+        year = self.query_one("#date-year", expect_type=Input)
+        if year.is_valid:
+            text = year.value
+            self.date["year"] = int(year.value)
+            month = self.query_one("#date-month", expect_type=Input)
+            if month.is_valid:
+                text = f"{self.month_to_word(month.value)} {year.value}"
+                self.date["month"] = int(month.value)
+                day = self.query_one("#date-day", expect_type=Input)
+                if day.is_valid:
+                    text = f"{self.month_to_word(month.value)} {day.value}, {year.value}"
+                    self.date["day"] = int(day.value)
+                    hour = self.query_one("#time-hour", expect_type=Input)
+                    if hour.is_valid:
+                        text = f"{self.month_to_word(month.value)} {day.value}, {year.value} | {hour.value}h00"
+                        self.time["hour"] = int(hour.value)
+                        self.time["mins"] = 0
+                        minutes = self.query_one("#time-mins", expect_type=Input)
+                        if minutes.is_valid:
+                            text = f"{self.month_to_word(month.value)} {day.value}, {year.value} | {hour.value}h{minutes.value}"
+                            self.time["mins"] = int(minutes.value)
+        self.query_one("Label", expect_type=Label).update(text)
+
     def update_date(self):
         self.date["year"] = None
         self.date["month"] = None

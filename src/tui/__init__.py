@@ -1,14 +1,13 @@
 from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header, Label, DataTable, \
-    ContentSwitcher, ListView, ListItem, Button, Input, Select, \
-    Checkbox
+    ContentSwitcher, ListView, ListItem, Button, Input, Select
 from textual.containers import Horizontal, Vertical
 from textual.validation import Length
 from textual.message import Message
 from textual.screen import ModalScreen
 from textual import on
 
-from enums import TaskCompletionStatus, TaskCategory
+from ..enums import TaskCompletionStatus, TaskCategory
 from datetime import time
 
 from .widgets import FormCouple, DateInput
@@ -307,7 +306,6 @@ class TasksApp(App):
         task_entry = self.controller.get_task(id=message.key.value)
         if task_entry:
             print(task_entry.to_dict())
-            # popup = EditTaskPopup()
             popup = EditTaskPopup(task_data=task_entry.to_dict())
             self.push_screen(popup)
 
@@ -316,6 +314,3 @@ class TasksApp(App):
         new_task = self.controller.add_task(task=message.task)
         if new_task:
             self.query_one(TasksTable).create_row(new_task)
-        # for attr in dir(message.task):
-        #     if not attr.startswith("__"):
-        #         print(attr, getattr(message.task, attr))

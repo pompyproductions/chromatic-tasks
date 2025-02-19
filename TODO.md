@@ -3,6 +3,10 @@
 --- 
 ## Current to-do list
 
+### Database
+
+- [ ] Create session for each transaction
+
 ### Pages
 
 #### "Create task" page
