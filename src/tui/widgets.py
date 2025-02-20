@@ -47,6 +47,23 @@ class DateInput(Horizontal):
         except ValueError:
             return "Invalid_Month"
 
+    @staticmethod
+    def date_to_str(date):
+        if not date["year"]:
+            return "No date"
+        part_year = str(date["year"])
+        part_month = ""
+        if date["month"]:
+            part_month = DateInput.month_to_word(date["month"]) + " "
+        part_day = ""
+        if date["day"]:
+            part_day = str(date["day"]) + ", "
+
+        text = part_month + part_day + part_year
+        if date["hour"]:
+            text += f" | {date["hour"]}h{'%02d' % (date["mins"],) if date["mins"] else '00'}"
+        return text
+
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -95,7 +112,6 @@ class DateInput(Horizontal):
             elem.validate(elem.value)
 
     def parse_date(self) -> dict:
-
         date : dict[str, None | int] = {
             "year": None,
             "month": None,
@@ -103,77 +119,29 @@ class DateInput(Horizontal):
             "hour": None,
             "mins": None
         }
-        year = self.query_one("#date-year", expect_type=Input)
-        if not year.is_valid:
-            return date
-        date["year"] = year.value
-        month= self.query_one("#month-year", expect_type=Input)
-
-        if not month.is_valid:
-            pass
-
-        # self.date["year"] = None
-        # self.date["month"] = None
-        # self.date["day"] = None
-        # self.time["hour"] = None
-        # self.time["mins"] = None
-        text = "No date"
-        year = self.query_one("#date-year", expect_type=Input)
-        if year.is_valid:
-            text = year.value
-            self.date["year"] = int(year.value)
-            month = self.query_one("#date-month", expect_type=Input)
-            if month.is_valid:
-                text = f"{self.month_to_word(month.value)} {year.value}"
-                self.date["month"] = int(month.value)
-                day = self.query_one("#date-day", expect_type=Input)
-                if day.is_valid:
-                    text = f"{self.month_to_word(month.value)} {day.value}, {year.value}"
-                    self.date["day"] = int(day.value)
-                    hour = self.query_one("#time-hour", expect_type=Input)
-                    if hour.is_valid:
-                        text = f"{self.month_to_word(month.value)} {day.value}, {year.value} | {hour.value}h00"
-                        self.time["hour"] = int(hour.value)
-                        self.time["mins"] = 0
-                        minutes = self.query_one("#time-mins", expect_type=Input)
-                        if minutes.is_valid:
-                            text = f"{self.month_to_word(month.value)} {day.value}, {year.value} | {hour.value}h{minutes.value}"
-                            self.time["mins"] = int(minutes.value)
-        self.query_one("Label", expect_type=Label).update(text)
+        for date_part in ["year", "month", "day"]:
+            input_elem = self.query_one("#date-" + date_part, expect_type=Input)
+            if not input_elem.is_valid:
+                return date
+            date[date_part] = int(input_elem.value)
+        for time_part in ["hour", "mins"]:
+            input_elem = self.query_one("#time-" + time_part, expect_type=Input)
+            if not input_elem.is_valid:
+                return date
+            date[time_part] = int(input_elem.value)
+        return date
 
     def update_date(self):
-        self.date["year"] = None
-        self.date["month"] = None
-        self.date["day"] = None
-        self.time["hour"] = None
-        self.time["mins"] = None
-        text = "No date"
-        year = self.query_one("#date-year", expect_type=Input)
-        if year.is_valid:
-            text = year.value
-            self.date["year"] = int(year.value)
-            month = self.query_one("#date-month", expect_type=Input)
-            if month.is_valid:
-                text = f"{self.month_to_word(month.value)} {year.value}"
-                self.date["month"] = int(month.value)
-                day = self.query_one("#date-day", expect_type=Input)
-                if day.is_valid:
-                    text = f"{self.month_to_word(month.value)} {day.value}, {year.value}"
-                    self.date["day"] = int(day.value)
-                    hour = self.query_one("#time-hour", expect_type=Input)
-                    if hour.is_valid:
-                        text = f"{self.month_to_word(month.value)} {day.value}, {year.value} | {hour.value}h00"
-                        self.time["hour"] = int(hour.value)
-                        self.time["mins"] = 0
-                        minutes = self.query_one("#time-mins", expect_type=Input)
-                        if minutes.is_valid:
-                            text = f"{self.month_to_word(month.value)} {day.value}, {year.value} | {hour.value}h{minutes.value}"
-                            self.time["mins"] = int(minutes.value)
-        self.query_one("Label", expect_type=Label).update(text)
+        self.date = self.parse_date()
+        self.query_one("Label", expect_type=Label).update(
+            DateInput.date_to_str(self.date)
+        )
 
     def set_date(self, *, date: dict, time: dict):
-        if date["year"]:
-            self.query_one("#date-year", expect_type=Input).value = str(date["year"])
+        if not date["year"]:
+            return
+        self.disabled = False
+        self.query_one("#date-year", expect_type=Input).value = str(date["year"])
 
     @on(Input.Changed)
     def validate_inputs(self, event):

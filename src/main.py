@@ -1,7 +1,6 @@
 import tui
 import db
 
-
 class Controller:
 
     def __init__(self, session):

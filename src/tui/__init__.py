@@ -7,7 +7,7 @@ from textual.message import Message
 from textual.screen import ModalScreen
 from textual import on
 
-from ..enums import TaskCompletionStatus, TaskCategory
+from enums import TaskCompletionStatus, TaskCategory
 from datetime import time
 
 from .widgets import FormCouple, DateInput
