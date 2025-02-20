@@ -137,11 +137,19 @@ class DateInput(Horizontal):
             DateInput.date_to_str(self.date)
         )
 
-    def set_date(self, *, date: dict, time: dict):
+    def populate_inputs(self, *, date: dict, time: dict):
         if not date["year"]:
             return
         self.disabled = False
         self.query_one("#date-year", expect_type=Input).value = str(date["year"])
+        for date_part in ["year", "month", "day"]:
+            if not date[date_part]:
+                return
+            self.query_one(f"#date-{date_part}", expect_type=Input).value = str(date[date_part])
+        for time_part in ["hour", "mins"]:
+            if not time[time_part]:
+                return
+            self.query_one(f"#time-{time_part}", expect_type=Input).value = str(time[time_part])
 
     @on(Input.Changed)
     def validate_inputs(self, event):

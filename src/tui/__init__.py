@@ -257,7 +257,7 @@ class EditTaskPopup(ModalScreen):
                 task_time["mins"] = task_value.minute
             else:
                 print(f"{task_key}: {task_value}")
-        self.query_one("#edit-task-scheduled", expect_type=DateInput).set_date(
+        self.query_one("#edit-task-scheduled", expect_type=DateInput).populate_inputs(
             date=task_date, time=task_time
         )
 
