@@ -32,9 +32,9 @@ class TaskInstance(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(80))
     status: Mapped[TaskCompletionStatus] = mapped_column(Enum(TaskCompletionStatus))
+    category: Mapped[TaskCategory] = mapped_column(Enum(TaskCategory))
     # OPTIONAL
     description: Mapped[str | None] = mapped_column(String(), nullable=True)
-    category: Mapped[TaskCategory | None] = mapped_column(Enum(TaskCategory), nullable=True)
     template_id: Mapped[int | None] = mapped_column(ForeignKey("task_template.id"), nullable=True)
     year_scheduled: Mapped[int | None] = mapped_column(Integer, nullable=True)
     month_scheduled: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -48,17 +48,6 @@ class TaskInstance(Base):
             task_dict[col.key] = getattr(self, col.key)
         return task_dict
 
-    # def to_dict(self) -> dict:
-    #     task_dict = {}
-    #     print(self.__dict__)
-    #     print(self.status)
-    #     for key, value in self.__dict__.items():
-    #         # print(key, ":", value)
-    #         if key.startswith("_"):
-    #             continue
-    #         if value is not None:
-    #             task_dict[key] = value
-    #     return task_dict
 
 class TaskTemplate(Base):
     __tablename__ = "task_template"
@@ -105,7 +94,7 @@ def add_task(*, session, task):
     )
     try:
         session.add(entry)
-        session.commit()  # Ensure the entry is written to the database
+        session.commit()
         session.refresh(entry)
         return entry
     except SQLAlchemyError:
@@ -140,4 +129,4 @@ def get_task_instances(session):
     return session.execute(select(TaskInstance))
 
 def get_task_instance(session, id):
-    return session.execute(select(TaskInstance).where(TaskInstance.id == id)).one()[0]
+    return session.execute(select(TaskInstance, id)).scalar()
