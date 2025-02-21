@@ -17,7 +17,7 @@ from .widgets import FormCouple, DateInput
 # Objects
 
 class Task:
-    def __init__(self, *args, title:str, category:TaskCategory):
+    def __init__(self, *, title:str, category:TaskCategory):
         self.title = title
         self.category = category
         self.status = TaskCompletionStatus.PENDING
@@ -47,8 +47,8 @@ class TasksTable(DataTable):
         return text
 
     @staticmethod
-    def time_to_string(time):
-        return f"{time.hour}h{time.minute:02d}"
+    def time_to_string(time_dict):
+        return f"{time_dict.hour}h{time_dict.minute:02d}"
 
     BINDINGS = [
         ("backspace", "delete_entry()", "Delete entry"),
@@ -171,16 +171,13 @@ class NewTaskForm(Vertical):
         with Horizontal(classes="form-end"):
             yield Button("Create task", id="submit")
 
-    def on_select_changed(self, event):
-        print(event.value)
-
     def on_mount(self):
-        elem = self.query_one("#new-task-title")
+        elem = self.query_one("#new-task-title", expect_type=Input)
         elem.validate(elem.value)
 
     @on(Input.Submitted)
     @on(Button.Pressed, "#submit")
-    def submit_form(self, event):
+    def submit_form(self):
         title_elem = self.query_one("#new-task-title", expect_type=Input)
         if not title_elem.is_valid:
             print("title not valid")
