@@ -3,7 +3,7 @@ import datetime, os
 from enums import TaskCompletionStatus, TaskCategory
 
 from sqlalchemy import create_engine
-from sqlalchemy import select
+from sqlalchemy import select, inspect
 from sqlalchemy import String, Integer, Enum, ForeignKey, Date, Time
 from sqlalchemy import Column, Table
 
@@ -41,14 +41,24 @@ class TaskInstance(Base):
     day_scheduled: Mapped[int | None] = mapped_column(Integer, nullable=True)
     time_scheduled: Mapped[datetime.time | None] = mapped_column(Time, nullable=True)
 
+
     def to_dict(self) -> dict:
         task_dict = {}
-        for key, value in self.__dict__.items():
-            if key.startswith("_"):
-                continue
-            if value is not None:
-                task_dict[key] = value
+        for col in inspect(self).mapper.column_attrs:
+            task_dict[col.key] = getattr(self, col.key)
         return task_dict
+
+    # def to_dict(self) -> dict:
+    #     task_dict = {}
+    #     print(self.__dict__)
+    #     print(self.status)
+    #     for key, value in self.__dict__.items():
+    #         # print(key, ":", value)
+    #         if key.startswith("_"):
+    #             continue
+    #         if value is not None:
+    #             task_dict[key] = value
+    #     return task_dict
 
 class TaskTemplate(Base):
     __tablename__ = "task_template"
@@ -100,6 +110,19 @@ def add_task(*, session, task):
         return entry
     except SQLAlchemyError:
         return None
+
+def edit_task(*, session, id, props):
+    task = session.get(TaskInstance, id)
+    if not task:
+        return False
+    try:
+        for key, value in props.items():
+            setattr(task, key, value)
+        session.commit()
+        return task
+    except SQLAlchemyError:
+        session.rollback()
+        return False
 
 def delete_task(*, session, id):
     task = session.get(TaskInstance, id)

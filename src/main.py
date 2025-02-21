@@ -18,6 +18,9 @@ class Controller:
     def delete_task(self, *, id):
         return db.delete_task(session=self.session, id=id)
 
+    def edit_task(self, *, id, props):
+        return db.edit_task(session=self.session, id=id, props=props)
+
 def main():
     db.create_tables()
     with db.DatabaseSession() as session:

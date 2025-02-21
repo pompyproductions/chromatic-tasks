@@ -51,8 +51,9 @@ class TasksTable(DataTable):
         return f"{time.hour}h{time.minute:02d}"
 
     BINDINGS = [
-        ("backspace", "delete_entry()", "Delete Entry"),
-        ("enter", "edit_entry()", "Edit Entry")
+        ("backspace", "delete_entry()", "Delete entry"),
+        ("enter", "edit_entry()", "Edit entry"),
+        ("m", "mark_as_complete()", "Mark as complete")
     ]
 
     class DeleteEntry(Message):
@@ -62,6 +63,11 @@ class TasksTable(DataTable):
     class EditEntry(Message):
         def __init__(self, key):
             self.key = key
+            super().__init__()
+    class ChangeEntryStatus(Message):
+        def __init__(self, *, key, status):
+            self.key = key
+            self.status = status
             super().__init__()
 
     def __init__(self, *args, tasks=None, **kwargs):
@@ -77,9 +83,15 @@ class TasksTable(DataTable):
             self.create_row(task[0])
 
     def create_columns(self):
-        self.add_columns(
-            "Title", "Status", "Date/Time"
-        )
+        for key, label, width in [
+            ("title", "Title", 0),
+            ("status", "Status", 10),
+            ("scheduled", "Date/Time", 0)
+        ]:
+            if width:
+                self.add_column(label, key=key, width=width)
+            else:
+                self.add_column(label, key=key)
 
     def create_row(self, task):
         title = task.title
@@ -103,6 +115,15 @@ class TasksTable(DataTable):
 
         self.add_row(title, status, date_time, key=task.id)
 
+    def edit_row(self, *, row, task):
+        columns = ["title", "status", "schedule"]
+        for key, value in task.items():
+            if key in columns:
+                label = value
+                if isinstance(value, TaskCategory | TaskCompletionStatus):
+                    label = label.name.title()
+                self.update_cell(row_key=row, column_key=key, value=label)
+
     def action_delete_entry(self):
         try:
             row_key, _ = self.coordinate_to_cell_key(self.cursor_coordinate)
@@ -113,10 +134,17 @@ class TasksTable(DataTable):
     def action_edit_entry(self):
         try:
             row_key, _ = self.coordinate_to_cell_key(self.cursor_coordinate)
-            print(row_key.value, self.get_row(row_key))
             self.post_message(self.EditEntry(row_key))
         except Exception:
             print("Failed.")
+
+    def action_mark_as_complete(self):
+        try:
+            row_key, _ = self.coordinate_to_cell_key(self.cursor_coordinate)
+            self.post_message(self.ChangeEntryStatus(key=row_key, status=TaskCompletionStatus.COMPLETE))
+        except Exception:
+            print("Failed.")
+
 
 class NewTaskForm(Vertical):
 
@@ -256,7 +284,7 @@ class EditTaskPopup(ModalScreen):
                 task_time["hour"] = task_value.hour
                 task_time["mins"] = task_value.minute
             else:
-                print(f"{task_key}: {task_value}")
+                print(f"(DID NOT DISPLAY) {task_key}: {task_value}")
         self.query_one("#edit-task-scheduled", expect_type=DateInput).populate_inputs(
             date=task_date, time=task_time
         )
@@ -299,15 +327,19 @@ class TasksApp(App):
     def delete_entry(self, message):
         if self.controller.delete_task(id=message.key.value):
             self.query_one(TasksTable).remove_row(message.key)
-        # print(message.key.value)
 
     @on(TasksTable.EditEntry)
     def edit_entry(self, message):
         task_entry = self.controller.get_task(id=message.key.value)
         if task_entry:
-            print(task_entry.to_dict())
             popup = EditTaskPopup(task_data=task_entry.to_dict())
             self.push_screen(popup)
+
+    @on(TasksTable.ChangeEntryStatus)
+    def change_entry_status(self, message):
+        modified_task = self.controller.edit_task(id=message.key.value, props={"status": message.status})
+        if modified_task:
+            self.query_one(TasksTable).edit_row(row=message.key, task=modified_task.to_dict())
 
     @on(NewTaskForm.NewTaskSubmit)
     def create_task(self, message):
