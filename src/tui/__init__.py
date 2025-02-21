@@ -276,6 +276,8 @@ class EditTaskPopup(ModalScreen):
             "mins": None
         }
         for task_key, task_value in self.task_data.items():
+            if task_value is None:
+                continue
             if task_key in ["title", "status", "id", "category"]:
                 continue
             if task_key in ["year_scheduled", "month_scheduled", "day_scheduled"]:
