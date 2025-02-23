@@ -16,7 +16,7 @@
 #### "Create task" page
 
 - [x] (2024-02-23) _When submitting a new task with a date and without a "status", set it to "scheduled"_
-- [ ] Unify task forms: "create task" and "edit task" should have the same "form" element to avoid duplicating code
+- [x] (2024-02-23) _Unify task forms: "create task" and "edit task" should have the same "form" element to avoid duplicating code_
 
 ### Modals
 

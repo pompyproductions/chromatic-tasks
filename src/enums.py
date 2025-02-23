@@ -12,3 +12,7 @@ class TaskCategory(Enum):
     WORK = 0
     SOCIAL = 1
     HOME = 2
+
+class FormType(Enum):
+    NEW_TASK = 0
+    EDIT_TASK = 1

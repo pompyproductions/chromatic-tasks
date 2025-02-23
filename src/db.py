@@ -4,7 +4,7 @@ from enums import TaskCompletionStatus, TaskCategory
 
 from sqlalchemy import create_engine
 from sqlalchemy import select, inspect
-from sqlalchemy import String, Integer, Enum, ForeignKey, Date, Time
+from sqlalchemy import String, Integer, Enum, ForeignKey, Time
 from sqlalchemy import Column, Table
 
 from sqlalchemy.orm import sessionmaker
@@ -42,9 +42,26 @@ class TaskInstance(Base):
     time_scheduled: Mapped[datetime.time | None] = mapped_column(Time, nullable=True)
 
     def to_dict(self) -> dict:
-        task_dict = {}
-        for col in inspect(self).mapper.column_attrs:
-            task_dict[col.key] = getattr(self, col.key)
+        task_dict = {
+            "id": self.id,
+            "title": self.title,
+            "status": self.status,
+            "category": self.category
+        }
+        for key in ["description", "template_id"]:
+            if getattr(self, key):
+                task_dict[key] = getattr(self, key)
+        date_dict = {
+            "year": self.year_scheduled,
+            "month": self.month_scheduled,
+            "day": self.day_scheduled,
+            "hour": None,
+            "mins": None
+        }
+        if self.time_scheduled:
+            date_dict["hour"] = self.time_scheduled.hour
+            date_dict["mins"] = self.time_scheduled.minute
+        task_dict["date"] = date_dict
         return task_dict
 
     def set_date(self, date_dict):
@@ -107,12 +124,12 @@ def add_task(*, session, task_dict):
     except SQLAlchemyError:
         return None
 
-def edit_task(*, session, id, props):
-    task = session.get(TaskInstance, id)
+def edit_task(*, session, task_id, task_dict):
+    task = session.get(TaskInstance, task_id)
     if not task:
         return False
     try:
-        for key, value in props.items():
+        for key, value in task_dict.items():
             setattr(task, key, value)
         session.commit()
         return task
@@ -120,8 +137,8 @@ def edit_task(*, session, id, props):
         session.rollback()
         return False
 
-def delete_task(*, session, id):
-    task = session.get(TaskInstance, id)
+def delete_task(*, session, task_id):
+    task = session.get(TaskInstance, task_id)
     if not task:
         return False
     try:
@@ -135,5 +152,5 @@ def delete_task(*, session, id):
 def get_task_instances(session):
     return session.execute(select(TaskInstance))
 
-def get_task_instance(session, id):
-    return session.execute(select(TaskInstance).where(TaskInstance.id == id)).scalar()
+def get_task_instance(session, task_id):
+    return session.execute(select(TaskInstance).where(TaskInstance.id == task_id)).scalar()
