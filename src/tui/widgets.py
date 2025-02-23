@@ -68,12 +68,10 @@ class DateInput(Horizontal):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.date = {
+        self.date_dict = {
             "year": None,
             "month": None,
-            "day": None
-        }
-        self.time = {
+            "day": None,
             "hour": None,
             "mins": None
         }
@@ -133,24 +131,24 @@ class DateInput(Horizontal):
         return date
 
     def update_date(self):
-        self.date = self.parse_date()
+        self.date_dict = self.parse_date()
         self.query_one("Label", expect_type=Label).update(
-            DateInput.date_to_str(self.date)
+            DateInput.date_to_str(self.date_dict)
         )
 
-    def populate_inputs(self, *, date: dict, time: dict):
+    def populate_inputs(self, *, date: dict):
         if not date["year"]:
             return
         self.disabled = False
         self.query_one("#date-year", expect_type=Input).value = str(date["year"])
-        for date_part in ["year", "month", "day"]:
-            if not date[date_part]:
+        for key in ["year", "month", "day"]:
+            if not date[key]:
                 return
-            self.query_one(f"#date-{date_part}", expect_type=Input).value = str(date[date_part])
-        for time_part in ["hour", "mins"]:
-            if not time[time_part]:
+            self.query_one(f"#date-{key}", expect_type=Input).value = str(date[key])
+        for key in ["hour", "mins"]:
+            if not date[key]:
                 return
-            self.query_one(f"#time-{time_part}", expect_type=Input).value = str(time[time_part])
+            self.query_one(f"#time-{key}", expect_type=Input).value = str(date[key])
 
     @on(Input.Changed)
     def validate_inputs(self, event):

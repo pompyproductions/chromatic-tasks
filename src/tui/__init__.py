@@ -266,9 +266,7 @@ class EditTaskPopup(ModalScreen):
         task_date = {
             "year": None,
             "month": None,
-            "day": None
-        }
-        task_time = {
+            "day": None,
             "hour": None,
             "mins": None
         }
@@ -280,12 +278,12 @@ class EditTaskPopup(ModalScreen):
             if task_key in ["year_scheduled", "month_scheduled", "day_scheduled"]:
                 task_date[task_key[:-10]] = task_value
             elif task_key == "time_scheduled":
-                task_time["hour"] = task_value.hour
-                task_time["mins"] = task_value.minute
+                task_date["hour"] = task_value.hour
+                task_date["mins"] = task_value.minute
             else:
                 print(f"(DID NOT DISPLAY) {task_key}: {task_value}")
         self.query_one("#edit-task-scheduled", expect_type=DateInput).populate_inputs(
-            date=task_date, time=task_time
+            date=task_date
         )
 
     @on(Button.Pressed, "#cancel")
