@@ -3,6 +3,10 @@
 --- 
 ## Current to-do list
 
+### Enums
+
+- [ ] (Maybe) Add a "to_str" method to avoid match statements everywhere else?
+
 ### Database
 
 - [ ] Create session for each transaction
@@ -11,8 +15,8 @@
 
 #### "Create task" page
 
-- [ ] When submitting a new task with a date and without a "status"
-
+- [x] (2024-02-23) _When submitting a new task with a date and without a "status", set it to "scheduled"_
+- [ ] Unify task forms: "create task" and "edit task" should have the same "form" element to avoid duplicating code
 
 ### Modals
 
@@ -22,7 +26,7 @@
 - [ ] Add "don't show this again" checkbox
 
 #### "Edit Task" modal
-- [ ] Display all values of selected task instance
+- [x] (2024-02-22) _Display all values of selected task instance_
 - [ ] Update db entry and table view on submit
 - [ ] If schedule is checked, date is valid, and status is Pending: change status to SCHEDULED on submit
   - [ ] When scheduled is checked & date is valid, option 1 turns from "PENDING" into "SCHEDULED"?
