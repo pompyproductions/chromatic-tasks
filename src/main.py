@@ -7,7 +7,7 @@ class Controller:
         self.session = session
 
     def add_task(self, *, task):
-        return db.add_task(session=self.session, task=task)
+        return db.add_task(session=self.session, task_dict=task)
 
     def get_all_tasks(self):
         return db.get_task_instances(self.session)

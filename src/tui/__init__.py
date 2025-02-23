@@ -134,6 +134,7 @@ class TasksTable(DataTable):
     def action_edit_entry(self):
         try:
             row_key, _ = self.coordinate_to_cell_key(self.cursor_coordinate)
+            # print(row_key.value)
             self.post_message(self.EditEntry(row_key))
         except Exception:
             print("Failed.")
@@ -175,41 +176,40 @@ class NewTaskForm(Vertical):
         elem = self.query_one("#new-task-title", expect_type=Input)
         elem.validate(elem.value)
 
-    @on(Input.Submitted)
-    @on(Button.Pressed, "#submit")
-    def submit_form(self):
-        title_elem = self.query_one("#new-task-title", expect_type=Input)
-        if not title_elem.is_valid:
-            print("title not valid")
-            return
-        task = Task(
-            title=title_elem.value,
-            category=self.query_one("#new-task-category", expect_type=Select).value
-        )
-
-        status_elem = self.query_one("#new-task-status", expect_type=Select)
-        if not status_elem.is_disabled:
-            task.status = status_elem.value
-
-        date_elem = self.query_one("#new-task-scheduled", expect_type=DateInput)
-        if not date_elem.is_disabled:
-            if date_elem.date["year"]:
-                task.year_scheduled = date_elem.date["year"]
-            if date_elem.date["month"]:
-                task.month_scheduled = date_elem.date["month"]
-            if date_elem.date["day"]:
-                task.day_scheduled = date_elem.date["day"]
-            if date_elem.time["hour"]:
-                if date_elem.time["mins"]:
-                    task.time_scheduled = time(hour=date_elem.time["hour"], minute=date_elem.time["mins"])
-                else:
-                    task.time_scheduled = time(hour=date_elem.time["hour"])
-        self.post_message(self.NewTaskSubmit(task))
-        self.reset_form()
 
     def reset_form(self):
         for elem in self.query("Input"):
             elem.value = ""
+        self.query_one("#new-task-scheduled").parent.disabled = True
+        self.query_one("#new-task-status").parent.disabled = True
+
+    @on(Input.Submitted)
+    @on(Button.Pressed, "#submit")
+    def submit_form(self):
+
+        title_input = self.query_one("#new-task-title", expect_type=Input)
+        if not title_input.is_valid:
+            print("Title not valid.")
+            return
+        task_dict = {
+            "title": title_input.value,
+            "category": self.query_one("#new-task-category", expect_type=Select).value,
+            "status": TaskCompletionStatus.PENDING
+        }
+        status_input = self.query_one("#new-task-status", expect_type=Select)
+        if not status_input.is_disabled:
+            task_dict["status"] = status_input.value
+        date_input = self.query_one("#new-task-scheduled", expect_type=DateInput)
+
+        if not date_input.is_disabled:
+            task_dict["date"] = date_input.parse_date()
+            if task_dict["date"]["year"] and task_dict["status"] == TaskCompletionStatus.PENDING:
+                task_dict["status"] = TaskCompletionStatus.SCHEDULED
+
+        self.post_message(self.NewTaskSubmit(task_dict))
+        self.reset_form()
+
+
 
 # ---
 # Modals
@@ -292,6 +292,11 @@ class EditTaskPopup(ModalScreen):
     def key_escape(self):
         self.app.pop_screen()
 
+    @on(Input.Submitted)
+    @on(Button.Pressed, "#submit")
+    def handle_submit(self):
+        print(self.query_one(DateInput).parse_date())
+
 # ---
 # Navigation
 class Sidebar(ListView):
@@ -329,8 +334,10 @@ class TasksApp(App):
 
     @on(TasksTable.EditEntry)
     def edit_entry(self, message):
+        # print(message.key.value)
         task_entry = self.controller.get_task(id=message.key.value)
         if task_entry:
+            print(task_entry.to_dict())
             popup = EditTaskPopup(task_data=task_entry.to_dict())
             self.push_screen(popup)
 

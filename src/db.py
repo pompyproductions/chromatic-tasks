@@ -47,6 +47,16 @@ class TaskInstance(Base):
             task_dict[col.key] = getattr(self, col.key)
         return task_dict
 
+    def set_date(self, date_dict):
+        self.year_scheduled = date_dict["year"]
+        self.month_scheduled = date_dict["month"]
+        self.day_scheduled = date_dict["day"]
+        if date_dict["hour"]:
+            if date_dict["mins"]:
+                self.time_scheduled = datetime.time(date_dict["hour"], date_dict["mins"])
+            else:
+                self.time_scheduled = datetime.time(date_dict["hour"])
+
 
 class TaskTemplate(Base):
     __tablename__ = "task_template"
@@ -80,17 +90,15 @@ def get_session():
 
 # ---
 # CRUD
-def add_task(*, session, task):
+def add_task(*, session, task_dict):
     entry = TaskInstance(
-        title=task.title,
-        status=task.status,
-        category=task.category,
-        description=task.description,
-        year_scheduled=task.year_scheduled,
-        month_scheduled=task.month_scheduled,
-        day_scheduled=task.day_scheduled,
-        time_scheduled=task.time_scheduled
+        title=task_dict["title"],
+        status=task_dict["status"],
+        category=task_dict["category"],
+        # description=task.description,
     )
+    if task_dict["date"]:
+        entry.set_date(task_dict["date"])
     try:
         session.add(entry)
         session.commit()
