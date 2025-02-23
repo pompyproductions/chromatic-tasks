@@ -194,9 +194,6 @@ class TaskForm(Vertical):
         def __init__(self, task_dict):
             super().__init__()
             self.task_dict = task_dict
-    class Close(Message):
-        def __init__(self):
-            super().__init__()
 
     def __init__(self, form_type:FormType, *, task_dict:dict|None=None):
         super().__init__()
@@ -228,8 +225,11 @@ class TaskForm(Vertical):
     def populate_form(self, task_dict:dict):
         # Required values
         self.query_one(f"#{self.form_name}-title", expect_type=Input).value = task_dict["title"]
-        self.query_one(f"#{self.form_name}-status", expect_type=Select).value = task_dict["status"]
         self.query_one(f"#{self.form_name}-category", expect_type=Select).value = task_dict["category"]
+        if task_dict["status"] == TaskCompletionStatus.SCHEDULED:
+            self.query_one(f"#{self.form_name}-status", expect_type=Select).value = TaskCompletionStatus.PENDING
+        else:
+            self.query_one(f"#{self.form_name}-status", expect_type=Select).value = task_dict["status"]
         # Optional values
         if task_dict["date"]:
             self.query_one(DateInput).populate_inputs(task_dict["date"])

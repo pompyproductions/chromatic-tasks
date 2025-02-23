@@ -7,6 +7,8 @@ class TaskCompletionStatus(Enum):
     COMPLETE = 2
     CANCELLED = 3
     ARCHIVED = 4
+    def to_str(self):
+        return self.name.capitalize()
 
 class TaskCategory(Enum):
     WORK = 0

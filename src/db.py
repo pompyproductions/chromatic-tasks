@@ -12,6 +12,7 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from sqlalchemy.exc import SQLAlchemyError
+from datetime import time
 
 DATABASE_URL = os.getenv("CHROMATIC_TASK_DATABASE_URL", "sqlite:///default.db")
 engine = create_engine(DATABASE_URL, echo=False)
@@ -107,7 +108,8 @@ def get_session():
 
 # ---
 # CRUD
-def add_task(*, session, task_dict):
+
+def add_task(*, session, task_dict:dict):
     entry = TaskInstance(
         title=task_dict["title"],
         status=task_dict["status"],
@@ -124,25 +126,36 @@ def add_task(*, session, task_dict):
     except SQLAlchemyError:
         return None
 
-def edit_task(*, session, task_id, task_dict):
-    task = session.get(TaskInstance, task_id)
-    if not task:
+def edit_task(*, session, row_id:int, task_dict:dict):
+    task_instance = session.get(TaskInstance, row_id)
+    if not task_instance:
         return False
     try:
         for key, value in task_dict.items():
-            setattr(task, key, value)
+            if key == "date":
+                setattr(task_instance, "year_scheduled", value["year"])
+                setattr(task_instance, "month_scheduled", value["month"])
+                setattr(task_instance, "day_scheduled", value["day"])
+                if value["hour"]:
+                    if value["mins"]:
+                        setattr(task_instance, "time_scheduled", time(hour=value["hour"], minute=value["mins"]))
+                    else:
+                        setattr(task_instance, "time_scheduled", time(hour=value["hour"]))
+            else:
+                setattr(task_instance, key, value)
         session.commit()
-        return task
+        return task_instance
+
     except SQLAlchemyError:
         session.rollback()
         return False
 
-def delete_task(*, session, task_id):
-    task = session.get(TaskInstance, task_id)
-    if not task:
+def delete_task(*, session, row_id:int):
+    task_instance = session.get(TaskInstance, row_id)
+    if not task_instance:
         return False
     try:
-        session.delete(task)
+        session.delete(task_instance)
         session.commit()
         return True
     except SQLAlchemyError:
@@ -152,5 +165,7 @@ def delete_task(*, session, task_id):
 def get_task_instances(session):
     return session.execute(select(TaskInstance))
 
-def get_task_instance(session, task_id):
-    return session.execute(select(TaskInstance).where(TaskInstance.id == task_id)).scalar()
+def get_task_instance(session, row_id:int):
+    return session.execute(
+        select(TaskInstance).where(TaskInstance.id == row_id)
+    ).scalar()
